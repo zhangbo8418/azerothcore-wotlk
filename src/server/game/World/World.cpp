@@ -2340,8 +2340,6 @@ void World::Update(uint32 diff)
 
     sScriptMgr->OnPlayerbotUpdate(diff);
 
-    // pussywizard: handle auctions when the timer has passed
-    if (_timers[WUPDATE_AUCTIONS].Passed())
     {
         // pussywizard: handle expired auctions, auctions expired when realm was offline are also handled here (not during loading when many required things aren't loaded yet)
         METRIC_TIMER("world_update_time", METRIC_TAG("type", "Update expired auctions"));
@@ -2699,24 +2697,11 @@ void World::ShutdownServ(uint32 time, uint32 options, uint8 exitcode, const std:
         time = 5;
     }
 
-    playersSaveScheduler.CancelAll();
-
     if (time >= 5)
     {
-        playersSaveScheduler.Schedule(Seconds(time - 5), [this](TaskContext /*context*/)
-        {
 #ifdef MOD_PLAYERBOTS
-            sScriptMgr->OnPlayerbotLogoutBots();
+        sScriptMgr->OnPlayerbotLogoutBots();
 #endif
-            if (!GetActiveSessionCount())
-            {
-                LOG_INFO("server", "> No players online. Skip save before shutdown");
-                return;
-            }
-
-            LOG_INFO("server", "> Save players before shutdown server");
-            ObjectAccessor::SaveAllPlayers();
-        });
     }
 
     LOG_WARN("server", "Time left until shutdown/restart: {}", time);
