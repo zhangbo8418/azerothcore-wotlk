@@ -21307,7 +21307,7 @@ bool Unit::IsInDisallowedMountForm() const
             return true;
         }
 
-        if (!(shapeshift->flags1 & 0x1))
+        if (!(shapeshift->flags1 & SHAPESHIFT_FLAG_STANCE))
         {
             return true;
         }
