@@ -1372,6 +1372,7 @@ void World::LoadConfigSettings(bool reload)
     _int_configs[CONFIG_LFG_OPTIONSMASK]    = sConfigMgr->GetOption<int32>("DungeonFinder.OptionsMask", 5);
 
     _bool_configs[CONFIG_LFG_CAST_DESERTER] = sConfigMgr->GetOption<int32>("DungeonFinder.CastDeserter", true);
+    _bool_configs[CONFIG_LFG_ENABLE_COOLDOWN] = sConfigMgr->GetOption<int32>("DungeonFinder.EnableCooldown", true);
 
     // DBC_ItemAttributes
     _bool_configs[CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES] = sConfigMgr->GetOption<bool>("DBC.EnforceItemAttributes", true);
