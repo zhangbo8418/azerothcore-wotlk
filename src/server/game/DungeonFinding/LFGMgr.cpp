@@ -1925,11 +1925,8 @@ namespace lfg
         for (LfgProposalPlayerContainer::iterator it = proposal.players.begin(); it != proposal.players.end(); ++it)
             if (it->second.accept == LFG_ANSWER_DENY)
                 if (Player* plr = ObjectAccessor::FindPlayer(it->first))
-                    if(sWorld->getBoolConfig(CONFIG_LFG_ENABLE_COOLDOWN))
-                    {
-                        if (Aura* aura = plr->AddAura(LFG_SPELL_DUNGEON_COOLDOWN, plr))
-                            aura->SetDuration(150 * IN_MILLISECONDS);
-                    }
+                    if (Aura* aura = plr->AddAura(LFG_SPELL_DUNGEON_COOLDOWN, plr))
+                        aura->SetDuration(150 * IN_MILLISECONDS);
 
         // Mark players/groups to be removed
         LfgGuidSet toRemove;
