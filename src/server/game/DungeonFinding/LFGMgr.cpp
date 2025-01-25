@@ -657,18 +657,22 @@ namespace lfg
             else
                 players.insert(player->GetGUID());
 
-            // Xinef: Check dungeon cooldown only for random dungeons
-            // Xinef: Moreover check this only if dungeon is not started, afterwards its obvious that players will have the cooldown
-            if (joinData.result == LFG_JOIN_OK && !isContinue && rDungeonId)
+            if (sWorld->getBoolConfig(CONFIG_LFG_ENABLE_COOLDOWN))
             {
-                if (player->HasAura(LFG_SPELL_DUNGEON_COOLDOWN)) // xinef: added !isContinue
-                    joinData.result = LFG_JOIN_RANDOM_COOLDOWN;
-                else if (grp)
+                // Xinef: Check dungeon cooldown only for random dungeons
+                // Xinef: Moreover check this only if dungeon is not started, afterwards its obvious that players will have the cooldown
+                if (joinData.result == LFG_JOIN_OK && !isContinue && rDungeonId)
                 {
-                    for (GroupReference* itr = grp->GetFirstMember(); itr != nullptr && joinData.result == LFG_JOIN_OK; itr = itr->next())
-                        if (Player* plrg = itr->GetSource())
-                            if (plrg->HasAura(LFG_SPELL_DUNGEON_COOLDOWN)) // xinef: added !isContinue
+                    if (player->HasAura(LFG_SPELL_DUNGEON_COOLDOWN)) // xinef: added !isContinue
+                        joinData.result = LFG_JOIN_RANDOM_COOLDOWN;
+                    else if (grp)
+                    {
+                        for (GroupReference* itr = grp->GetFirstMember(); itr != nullptr && joinData.result == LFG_JOIN_OK; itr = itr->next())
+                            if (Player* plrg = itr->GetSource())
+                            {
                                 joinData.result = LFG_JOIN_PARTY_RANDOM_COOLDOWN;
+                            }
+                    }
                 }
             }
         }
@@ -1923,10 +1927,17 @@ namespace lfg
 
         // pussywizard: add cooldown for not accepting (after 40 secs) or declining
         for (LfgProposalPlayerContainer::iterator it = proposal.players.begin(); it != proposal.players.end(); ++it)
-            if (it->second.accept == LFG_ANSWER_DENY)
-                if (Player* plr = ObjectAccessor::FindPlayer(it->first))
-                    if (Aura* aura = plr->AddAura(LFG_SPELL_DUNGEON_COOLDOWN, plr))
-                        aura->SetDuration(150 * IN_MILLISECONDS);
+            if (sWorld->getBoolConfig(CONFIG_LFG_ENABLE_COOLDOWN))
+            {
+                if (it->second.accept == LFG_ANSWER_DENY)
+                    if (Player* plr = ObjectAccessor::FindPlayer(it->first))
+                    {
+                        if (Aura* aura = plr->AddAura(LFG_SPELL_DUNGEON_COOLDOWN, plr))
+                            aura->SetDuration(150 * IN_MILLISECONDS);
+                    }
+            }
+ 
+                    
 
         // Mark players/groups to be removed
         LfgGuidSet toRemove;
@@ -2265,6 +2276,11 @@ namespace lfg
 
             // Remove Dungeon Finder Cooldown if still exists
             if (player->HasAura(LFG_SPELL_DUNGEON_COOLDOWN))
+            {
+                player->RemoveAurasDueToSpell(LFG_SPELL_DUNGEON_COOLDOWN);
+            }
+
+            if (!sWorld->getBoolConfig(CONFIG_LFG_ENABLE_COOLDOWN))
             {
                 player->RemoveAurasDueToSpell(LFG_SPELL_DUNGEON_COOLDOWN);
             }

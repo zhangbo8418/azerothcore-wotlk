@@ -13085,14 +13085,16 @@ PartyResult Player::CanUninviteFromGroup(ObjectGuid targetPlayerGUID) const
 
         if (Player* target = ObjectAccessor::FindConnectedPlayer(targetPlayerGUID))
         {
-            if (Aura* dungeonCooldownAura = target->GetAura(lfg::LFG_SPELL_DUNGEON_COOLDOWN))
+            if (sWorld->getBoolConfig(CONFIG_LFG_ENABLE_COOLDOWN))
             {
-                int32 elapsedTime = dungeonCooldownAura->GetMaxDuration() - dungeonCooldownAura->GetDuration();
-                if (static_cast<int32>(sWorld->getIntConfig(CONFIG_LFG_KICK_PREVENTION_TIMER)) > elapsedTime)
-                {
-                    return ERR_PARTY_LFG_BOOT_NOT_ELIGIBLE_S;
+                if (Aura* dungeonCooldownAura = target->GetAura(lfg::LFG_SPELL_DUNGEON_COOLDOWN)) {
+                    int32 elapsedTime = dungeonCooldownAura->GetMaxDuration() - dungeonCooldownAura->GetDuration();
+                    if (static_cast<int32>(sWorld->getIntConfig(CONFIG_LFG_KICK_PREVENTION_TIMER)) > elapsedTime)
+                    {
+                        return ERR_PARTY_LFG_BOOT_NOT_ELIGIBLE_S;
+                    }
                 }
-            }
+            }            
         }
 
         /* Missing support for these types
