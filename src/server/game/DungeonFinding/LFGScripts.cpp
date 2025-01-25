@@ -249,10 +249,7 @@ namespace lfg
                     player->HasAura(LFG_SPELL_DUNGEON_COOLDOWN) && players >= LFG_GROUP_KICK_VOTES_NEEDED &&
                     sWorld->getBoolConfig(CONFIG_LFG_CAST_DESERTER))
             {
-                if (sWorld->getBoolConfig(CONFIG_LFG_ENABLE_COOLDOWN))
-                {
-                    player->AddAura(LFG_SPELL_DUNGEON_DESERTER, player);
-                }                
+                player->AddAura(LFG_SPELL_DUNGEON_DESERTER, player);
             }
             //else if (state == LFG_STATE_BOOT)
             // Update internal kick cooldown of kicked
