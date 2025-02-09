@@ -3729,9 +3729,7 @@ void Map::ScheduleCreatureRespawn(ObjectGuid creatureGuid, Milliseconds respawnT
     _creatureRespawnScheduler.Schedule(respawnTimer, [this, creatureGuid](TaskContext)
     {
         if (Creature* creature = GetCreature(creatureGuid))
-        {
             creature->Respawn();
-        }
     });
 }
 
