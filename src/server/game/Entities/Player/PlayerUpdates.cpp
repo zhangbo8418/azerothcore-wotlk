@@ -551,17 +551,16 @@ void Player::UpdateLocalChannels(uint32 newZone)
                                   // names are not changing
 
                     char        new_channel_name_buf[100];
-                    char const* currentNameExt;
+                    std::string currentNameExt;
 
                     if (channel->flags & CHANNEL_DBC_FLAG_CITY_ONLY)
-                        currentNameExt = sObjectMgr->GetAcoreStringForDBCLocale(
-                            LANG_CHANNEL_CITY).c_str();
+                        currentNameExt = sObjectMgr->GetAcoreStringForDBCLocale(LANG_CHANNEL_CITY);
                     else
-                        currentNameExt = current_zone_name.c_str();
+                        currentNameExt = current_zone_name;
 
                     snprintf(new_channel_name_buf, 100,
                              channel->pattern[m_session->GetSessionDbcLocale()],
-                             currentNameExt);
+                             currentNameExt.c_str());
 
                     joinChannel = cMgr->GetJoinChannel(new_channel_name_buf,
                                                        channel->ChannelID);
@@ -2379,7 +2378,15 @@ void Player::ProcessSpellQueue()
         if (CanExecutePendingSpellCastRequest(spellInfo))
         {
             ExecuteOrCancelSpellCastRequest(&request);
-            SpellQueue.pop_front(); // Remove from the queue
+
+            // ExecuteOrCancelSpellCastRequest() can lead to clearing the SpellQueue.
+            // Example scenario:
+            //   Handling a spell → Dealing damage to yourself (e.g., spell_pri_vampiric_touch) →
+            //   Killing yourself → Player::setDeathState() → SpellQueue.clear().
+            // Calling std::deque::pop_front() on an empty deque results in undefined behavior,
+            // so an additional check is added.
+            if (!SpellQueue.empty())
+                SpellQueue.pop_front();
         }
         else // If the first spell can't execute, stop processing
             break;
