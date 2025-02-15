@@ -314,8 +314,6 @@ protected:
     void CalendarDeleteOldEvents();
     void ResetGuildCap();
 
-    SQLQueryHolderCallback& AddQueryHolderCallback(SQLQueryHolderCallback&& callback) override;
-
 private:
     static std::atomic_long _stopEvent;
     static uint8 _exitCode;
