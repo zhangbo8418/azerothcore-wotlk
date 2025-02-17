@@ -352,7 +352,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
         ++_addonMessageReceiveCount;
     }
 
-    sScriptMgr->OnBeforeSendChatMessage(_player, type, lang, msg);
+    sScriptMgr->OnPlayerBeforeSendChatMessage(_player, type, lang, msg);
 
     switch (type)
     {
@@ -445,7 +445,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 if (type == CHAT_MSG_PARTY_LEADER && !group->IsLeader(sender->GetGUID()))
                     return;
 
-                if (!sScriptMgr->CanPlayerUseChat(GetPlayer(), type, lang, msg, group))
+                if (!sScriptMgr->OnPlayerCanUseChat(GetPlayer(), type, lang, msg, group))
                 {
                     return;
                 }
@@ -463,7 +463,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 {
                     if (Guild* guild = sGuildMgr->GetGuildById(GetPlayer()->GetGuildId()))
                     {
-                        if (!sScriptMgr->CanPlayerUseChat(GetPlayer(), type, lang, msg, guild))
+                        if (!sScriptMgr->OnPlayerCanUseChat(GetPlayer(), type, lang, msg, guild))
                         {
                             return;
                         }
@@ -485,7 +485,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 {
                     if (Guild* guild = sGuildMgr->GetGuildById(GetPlayer()->GetGuildId()))
                     {
-                        if (!sScriptMgr->CanPlayerUseChat(GetPlayer(), type, lang, msg, guild))
+                        if (!sScriptMgr->OnPlayerCanUseChat(GetPlayer(), type, lang, msg, guild))
                         {
                             return;
                         }
@@ -508,7 +508,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                         return;
                 }
 
-                if (!sScriptMgr->CanPlayerUseChat(GetPlayer(), type, lang, msg, group))
+                if (!sScriptMgr->OnPlayerCanUseChat(GetPlayer(), type, lang, msg, group))
                 {
                     return;
                 }
@@ -531,7 +531,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                         return;
                 }
 
-                if (!sScriptMgr->CanPlayerUseChat(GetPlayer(), type, lang, msg, group))
+                if (!sScriptMgr->OnPlayerCanUseChat(GetPlayer(), type, lang, msg, group))
                 {
                     return;
                 }
@@ -549,7 +549,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 if (!group || !group->isRaidGroup() || !(group->IsLeader(GetPlayer()->GetGUID()) || group->IsAssistant(GetPlayer()->GetGUID())) || group->isBGGroup())
                     return;
 
-                if (!sScriptMgr->CanPlayerUseChat(GetPlayer(), type, lang, msg, group))
+                if (!sScriptMgr->OnPlayerCanUseChat(GetPlayer(), type, lang, msg, group))
                 {
                     return;
                 }
@@ -569,7 +569,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 if (!group || !group->isBGGroup())
                     return;
 
-                if (!sScriptMgr->CanPlayerUseChat(GetPlayer(), type, lang, msg, group))
+                if (!sScriptMgr->OnPlayerCanUseChat(GetPlayer(), type, lang, msg, group))
                 {
                     return;
                 }
@@ -588,7 +588,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 if (!group || !group->isBGGroup() || !group->IsLeader(GetPlayer()->GetGUID()))
                     return;
 
-                if (!sScriptMgr->CanPlayerUseChat(GetPlayer(), type, lang, msg, group))
+                if (!sScriptMgr->OnPlayerCanUseChat(GetPlayer(), type, lang, msg, group))
                 {
                     return;
                 }
@@ -615,7 +615,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 {
                     if (Channel* chn = cMgr->GetChannel(channel, sender))
                     {
-                        if (!sScriptMgr->CanPlayerUseChat(sender, type, lang, msg, chn))
+                        if (!sScriptMgr->OnPlayerCanUseChat(sender, type, lang, msg, chn))
                         {
                             return;
                         }
@@ -648,7 +648,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                         sender->ToggleAFK();
                     }
 
-                    if (!sScriptMgr->CanPlayerUseChat(sender, type, lang, msg))
+                    if (!sScriptMgr->OnPlayerCanUseChat(sender, type, lang, msg))
                     {
                         return;
                     }
@@ -676,7 +676,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                     sender->ToggleDND();
                 }
 
-                if (!sScriptMgr->CanPlayerUseChat(sender, type, lang, msg))
+                if (!sScriptMgr->OnPlayerCanUseChat(sender, type, lang, msg))
                 {
                     return;
                 }
