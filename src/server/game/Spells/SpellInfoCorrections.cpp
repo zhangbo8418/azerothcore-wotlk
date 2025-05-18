@@ -4897,12 +4897,16 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->Effects[EFFECT_0].RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_70_YARDS);
     });
 
-    ApplySpellFix({
-        45662, // Encapsulate
-        45642  // Fire Bloom
-        }, [](SpellInfo* spellInfo)
+    // Encapsulate
+    ApplySpellFix({ 45662 }, [](SpellInfo* spellInfo)
     {
         spellInfo->AttributesEx7 |= SPELL_ATTR7_TREAT_AS_NPC_AOE;
+    });
+
+    // Heal (Crystal Spire of Karabor)
+    ApplySpellFix({ 40972 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->AttributesEx3 |= SPELL_ATTR3_SUPPRESS_CASTER_PROCS;
     });
 
     // Torch (Death Knights near the Chapel)
