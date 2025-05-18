@@ -141,7 +141,6 @@ struct npc_kiljaeden_controller : public NullCreatureAI
 
     void Reset() override
     {
-        scheduler.CancelAll();
         instance->SetBossState(DATA_KILJAEDEN, NOT_STARTED);
         summons.DespawnAll();
         ResetOrbs();
@@ -260,12 +259,12 @@ struct boss_kiljaeden : public BossAI
         ScheduleHealthCheckEvent(85, [&]{
             _phase = PHASE_DARKNESS;
             if (Creature* kalec = instance->GetCreature(DATA_KALECGOS_KJ))
-                kalec->AI()->Talk(SAY_KALECGOS_AWAKEN, 21s);
+                kalec->AI()->Talk(SAY_KALECGOS_AWAKEN, 16s);
 
             if (Creature* anveena = instance->GetCreature(DATA_ANVEENA))
-                anveena->AI()->Talk(SAY_ANVEENA_IMPRISONED, 26s);
+                anveena->AI()->Talk(SAY_ANVEENA_IMPRISONED, 22s);
 
-            Talk(SAY_KJ_PHASE3, 32s);
+            Talk(SAY_KJ_PHASE3, 28s);
 
             scheduler.CancelAll();
 
@@ -275,7 +274,7 @@ struct boss_kiljaeden : public BossAI
                 if (Creature* kalec = instance->GetCreature(DATA_KALECGOS_KJ))
                     kalec->AI()->Talk(SAY_KALECGOS_READY1);
                 EmpowerOrb(false);
-            }, 38s);
+            }, 35s);
 
             me->m_Events.AddEventAtOffset([&] {
                 Talk(SAY_KJ_REFLECTION);
@@ -287,11 +286,11 @@ struct boss_kiljaeden : public BossAI
                 DoCastSelf(SPELL_SHADOW_SPIKE);
             });
 
-            ScheduleTimedEvent(31s, [&] {
+            ScheduleTimedEvent(3s, [&] {
                 DoCastSelf(SPELL_FLAME_DART);
-            }, 20s);
+            }, 10s);
 
-            ScheduleTimedEvent(55s, [&] {
+            ScheduleTimedEvent(16s, [&] {
                 Talk(EMOTE_KJ_DARKNESS);
                 DoCastAOE(SPELL_DARKNESS_OF_A_THOUSAND_SOULS);
             }, 45s);
@@ -300,12 +299,12 @@ struct boss_kiljaeden : public BossAI
         ScheduleHealthCheckEvent(55, [&] {
             _phase = PHASE_ARMAGEDDON;
             if (Creature* kalec = instance->GetCreature(DATA_KALECGOS_KJ))
-                kalec->AI()->Talk(SAY_KALECGOS_LETGO, 18s);
+                kalec->AI()->Talk(SAY_KALECGOS_LETGO, 16s);
 
             if (Creature* anveena = instance->GetCreature(DATA_ANVEENA))
-                anveena->AI()->Talk(SAY_ANVEENA_LOST, 25s);
+                anveena->AI()->Talk(SAY_ANVEENA_LOST, 22s);
 
-            Talk(SAY_KJ_PHASE4, 32s);
+            Talk(SAY_KJ_PHASE4, 28s);
 
             scheduler.CancelAll();
 
@@ -313,7 +312,7 @@ struct boss_kiljaeden : public BossAI
                 if (Creature* kalec = instance->GetCreature(DATA_KALECGOS_KJ))
                     kalec->AI()->Talk(SAY_KALECGOS_READY2);
                 EmpowerOrb(false);
-            }, 38s);
+            }, 35s);
 
             scheduler.Schedule(1s, [this](TaskContext)
             {
@@ -327,11 +326,7 @@ struct boss_kiljaeden : public BossAI
                 ScheduleBasicAbilities();
             });
 
-            ScheduleTimedEvent(28s, [&] {
-                DoCastSelf(SPELL_FLAME_DART);
-            }, 20s);
-
-            ScheduleTimedEvent(64s, [&] {
+            ScheduleTimedEvent(15s, [&] {
                 me->RemoveAurasDueToSpell(SPELL_ARMAGEDDON_PERIODIC);
                 Talk(EMOTE_KJ_DARKNESS);
                 DoCastAOE(SPELL_DARKNESS_OF_A_THOUSAND_SOULS);
@@ -367,14 +362,14 @@ struct boss_kiljaeden : public BossAI
 
                 if (Creature* kalec = instance->GetCreature(DATA_KALECGOS_KJ))
                 {
-                    kalec->AI()->Talk(SAY_KALECGOS_FOCUS, 9s);
-                    kalec->AI()->Talk(SAY_KALECGOS_FATE, 22s + 200ms);
+                    kalec->AI()->Talk(SAY_KALECGOS_FOCUS, 8s);
+                    kalec->AI()->Talk(SAY_KALECGOS_FATE, 20s + 200ms);
                 }
 
                 if (Creature* anveena = instance->GetCreature(DATA_ANVEENA))
                 {
-                    anveena->AI()->Talk(SAY_ANVEENA_KALEC, 20s);
-                    anveena->AI()->Talk(SAY_ANVEENA_GOODBYE, 29s);
+                    anveena->AI()->Talk(SAY_ANVEENA_KALEC, 18s);
+                    anveena->AI()->Talk(SAY_ANVEENA_GOODBYE, 25s);
                 }
 
                 me->m_Events.AddEventAtOffset([&] {
@@ -383,7 +378,7 @@ struct boss_kiljaeden : public BossAI
                         anveena->RemoveAllAuras();
                         anveena->DespawnOrUnsummon(3500);
                     }
-                }, 34s);
+                }, 28s);
 
                 me->m_Events.AddEventAtOffset([&] {
                     if (Creature* anveena = instance->GetCreature(DATA_ANVEENA))
@@ -399,11 +394,7 @@ struct boss_kiljaeden : public BossAI
 
                             ScheduleBasicAbilities();
 
-                            ScheduleTimedEvent(16s, [&] {
-                                DoCastSelf(SPELL_FLAME_DART);
-                            }, 20s);
-
-                            ScheduleTimedEvent(15s, [&] {
+                            ScheduleTimedEvent(25s, [&] {
                                 me->RemoveAurasDueToSpell(SPELL_ARMAGEDDON_PERIODIC);
                                 Talk(EMOTE_KJ_DARKNESS);
                                 DoCastAOE(SPELL_DARKNESS_OF_A_THOUSAND_SOULS);
@@ -420,13 +411,13 @@ struct boss_kiljaeden : public BossAI
                         }, 7s);
                     }
                     Talk(SAY_KJ_PHASE5);
-                }, 36s);
+                }, 30s);
 
                 me->m_Events.AddEventAtOffset([&] {
                     if (Creature* kalec = instance->GetCreature(DATA_KALECGOS_KJ))
                         kalec->AI()->Talk(SAY_KALECGOS_READY_ALL);
                     EmpowerOrb(true);
-                }, 48s);
+                }, 61s);
             });
         });
     }
