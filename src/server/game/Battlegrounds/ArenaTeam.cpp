@@ -36,9 +36,7 @@ ArenaTeam::ArenaTeam()
     Stats.WeekGames   = 0;
     Stats.SeasonGames = 0;
     Stats.Rank        = 0;
-    Stats.Rating = (sArenaSeasonMgr->GetCurrentSeason() < 6)
-        ? sWorld->getIntConfig(CONFIG_LEGACY_ARENA_START_RATING)
-        : sWorld->getIntConfig(CONFIG_ARENA_START_RATING);
+    Stats.Rating      = sWorld->getIntConfig(CONFIG_ARENA_START_RATING);
     Stats.WeekWins    = 0;
     Stats.SeasonWins  = 0;
 }

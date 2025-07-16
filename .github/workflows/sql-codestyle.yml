@@ -1,4 +1,4 @@
-name: SQL Codestyle
+name: Codestyle
 on:
   pull_request:
     types:

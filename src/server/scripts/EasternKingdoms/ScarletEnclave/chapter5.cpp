@@ -548,7 +548,6 @@ public:
             summons.DespawnAll();
 
             me->SetImmuneToAll(true);
-            me->LoadEquipment(1, true);
             me->ReplaceAllNpcFlags(UNIT_NPC_FLAG_GOSSIP | UNIT_NPC_FLAG_QUESTGIVER);
             me->SetStandState(UNIT_STAND_STATE_STAND);
             me->SetVisible(true);
@@ -700,7 +699,6 @@ public:
                             {
                                 summon->CombatStop(true);
                                 summon->GetThreatMgr().ClearAllThreat();
-                                summon->SetUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
                                 summon->SetImmuneToAll(true);
                                 summon->SetReactState(REACT_PASSIVE);
                                 summon->GetMotionMaster()->Clear(false);
@@ -951,7 +949,6 @@ public:
                                 if (summon->GetEntry() <= NPC_RIMBLAT_EARTHSHATTER && summon->GetEntry() != NPC_HIGHLORD_TIRION_FORDRING)
                                 {
                                     float o = lk->GetAngle(summon);
-                                    summon->RemoveUnitFlag(UNIT_FLAG_NON_ATTACKABLE);
                                     summon->GetMotionMaster()->MovePoint(3, lk->GetPositionX() + 2.0f * cos(o), lk->GetPositionY() + 2.0f * std::sin(o), lk->GetPositionZ());
                                     summon->ToTempSummon()->SetTempSummonType(TEMPSUMMON_MANUAL_DESPAWN);
                                 }

@@ -1,4 +1,4 @@
-name: C++ Codestyle
+name: Codestyle
 on:
   pull_request:
     types:

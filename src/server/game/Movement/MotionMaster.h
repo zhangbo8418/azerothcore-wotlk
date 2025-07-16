@@ -243,7 +243,6 @@ public:
 #endif
     [[nodiscard]] MovementGeneratorType GetCurrentMovementGeneratorType() const;
     [[nodiscard]] MovementGeneratorType GetMotionSlotType(int slot) const;
-    bool HasMovementGeneratorType(MovementGeneratorType type) const;
     [[nodiscard]] uint32 GetCurrentSplineId() const; // Xinef: Escort system
 
     void propagateSpeedChange();

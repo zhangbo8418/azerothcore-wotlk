@@ -137,16 +137,10 @@ void FleeingMovementGenerator<T>::SetTargetLocation(T* owner)
         _path->Clear();
     }
 
-    if (owner->IsPlayer())
-        _path->SetSlopeCheck(true);
-
     _path->SetPathLengthLimit(30.0f);
     bool result = _path->CalculatePath(destination.GetPositionX(), destination.GetPositionY(), destination.GetPositionZ());
-    if (!result || (_path->GetPathType() & PathType(PATHFIND_NOPATH | PATHFIND_SHORTCUT | PATHFIND_FARFROMPOLY | PATHFIND_NOT_USING_PATH)))
+    if (!result || (_path->GetPathType() & PathType(PATHFIND_NOPATH | PATHFIND_SHORTCUT | PATHFIND_FARFROMPOLY)))
     {
-        if (_fleeTargetGUID)
-            ++_invalidPathsCount;
-
         _timer.Reset(100);
         return;
     }
@@ -155,13 +149,15 @@ void FleeingMovementGenerator<T>::SetTargetLocation(T* owner)
     if (_path->getPathLength() < MIN_PATH_LENGTH)
     {
         if (_fleeTargetGUID)
-            ++_invalidPathsCount;
+        {
+            ++_shortPathsCount;
+        }
 
         _timer.Reset(100);
         return;
     }
 
-    _invalidPathsCount = 0;
+    _shortPathsCount = 0;
 
     Movement::MoveSplineInit init(owner);
     init.MovebyPath(_path->GetPath());
@@ -176,7 +172,7 @@ void FleeingMovementGenerator<T>::GetPoint(T* owner, Position& position)
     float casterDistance = 0.f;
     float casterAngle = 0.f;
     Unit* fleeTarget = nullptr;
-    if (_invalidPathsCount < 5)
+    if (_shortPathsCount < 5)
         fleeTarget = ObjectAccessor::GetUnit(*owner, _fleeTargetGUID);
 
     if (fleeTarget)
