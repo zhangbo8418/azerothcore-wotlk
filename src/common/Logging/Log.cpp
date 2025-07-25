@@ -29,7 +29,6 @@
 #include "Timer.h"
 #include "Tokenize.h"
 #include <chrono>
-#include <memory>
 
 Log::Log() : AppenderId(0), highestLogLevel(LOG_LEVEL_FATAL)
 {
@@ -40,6 +39,7 @@ Log::Log() : AppenderId(0), highestLogLevel(LOG_LEVEL_FATAL)
 
 Log::~Log()
 {
+    delete _strand;
     Close();
 }
 
@@ -369,7 +369,7 @@ void Log::Initialize(Acore::Asio::IoContext* ioContext)
     if (ioContext)
     {
         _ioContext = ioContext;
-        _strand = std::make_unique<Acore::Asio::Strand>(*ioContext);
+        _strand = new Acore::Asio::Strand(*ioContext);
     }
 
     LoadFromConfig();
@@ -377,7 +377,8 @@ void Log::Initialize(Acore::Asio::IoContext* ioContext)
 
 void Log::SetSynchronous()
 {
-    _strand.reset();
+    delete _strand;
+    _strand = nullptr;
     _ioContext = nullptr;
 }
 

@@ -24,7 +24,6 @@
 #include "StringFormat.h"
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 class Appender;
 class Logger;
@@ -121,7 +120,7 @@ private:
     std::string m_logsTimestamp;
 
     Acore::Asio::IoContext* _ioContext;
-    std::unique_ptr<Acore::Asio::Strand> _strand;
+    Acore::Asio::Strand* _strand;
 };
 
 #define sLog Log::instance()

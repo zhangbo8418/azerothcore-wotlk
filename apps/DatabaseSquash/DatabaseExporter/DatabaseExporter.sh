@@ -52,8 +52,7 @@ for DB_NAME in "${!DB_MAP[@]}"; do
     TABLE=$(echo "$raw_table" | tr -d '\r"' | xargs)
     if [[ -n "$TABLE" ]]; then
       echo "  ➤ Dumping table: $TABLE"
-      # --skip-tz-utc needed to keep TIMESTAMP values as-is
-      mysqldump -u $DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT --skip-tz-utc --extended-insert $DB_NAME $TABLE > $BASE_OUTPUT_DIR/$FOLDER_NAME/$TABLE.sql
+      mysqldump -u $DB_USER -p$DB_PASS -h $DB_HOST -P $DB_PORT --extended-insert $DB_NAME $TABLE > $BASE_OUTPUT_DIR/$FOLDER_NAME/$TABLE.sql
 
       # cleanup files
       sed -E '

@@ -711,9 +711,8 @@ public:
                                 }
                             }
                         }
-                        // Must check for loot state as out of order updates will reset
-                        // the prison gameobject during spawn causing invalid state
-                        if (prison && prison->getLootState() != GO_NOT_READY)
+
+                        if (prison)
                             prison->ResetDoorOrButton();
                     }
                     break;

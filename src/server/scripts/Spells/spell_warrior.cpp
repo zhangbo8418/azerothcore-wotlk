@@ -102,15 +102,23 @@ class spell_warr_victory_rush : public SpellScript
 {
     PrepareSpellScript(spell_warr_victory_rush);
 
-    void HandleCast()
+    void VictoryRushHit()
     {
-        if (Unit* caster = GetCaster())
-            caster->RemoveAurasDueToSpell(SPELL_VICTORIOUS);
+        if (Unit* player = GetCaster())
+        {
+            if (Unit* victim = GetHitUnit())
+            {
+                if (victim->isDead())
+                {
+                    player->CastSpell(player, SPELL_VICTORIOUS, true);
+                }
+            }
+        }
     }
 
     void Register() override
     {
-        OnCast += SpellCastFn(spell_warr_victory_rush::HandleCast);
+        AfterHit += SpellHitFn(spell_warr_victory_rush::VictoryRushHit);
     }
 };
 

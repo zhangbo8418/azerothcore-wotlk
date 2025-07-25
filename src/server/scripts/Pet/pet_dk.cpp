@@ -280,17 +280,17 @@ class spell_pet_dk_gargoyle_strike : public SpellScript
 
     void HandleDamageCalc(SpellEffIndex /*effIndex*/)
     {
-        int32 damage = GetEffectValue();
+        int32 damage = 60;
         if (Unit* caster = GetCaster())
             if (caster->GetLevel() >= 60)
-                damage += (caster->GetLevel() - 60) * 3;
+                damage += (caster->GetLevel() - 60) * 4;
 
         SetEffectValue(damage);
     }
 
     void Register() override
     {
-        OnEffectLaunchTarget += SpellEffectFn(spell_pet_dk_gargoyle_strike::HandleDamageCalc, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+        OnEffectHitTarget += SpellEffectFn(spell_pet_dk_gargoyle_strike::HandleDamageCalc, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
     }
 };
 

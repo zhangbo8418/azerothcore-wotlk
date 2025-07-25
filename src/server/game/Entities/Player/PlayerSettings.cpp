@@ -28,92 +28,117 @@ void Player::_LoadCharacterSettings(PreparedQueryResult result)
     m_charSettingsMap.clear();
 
     if (!sWorld->getBoolConfig(CONFIG_PLAYER_SETTINGS_ENABLED))
-        return;
-
-    if (!result)
-        return;
-
-    do
     {
-        Field* fields = result->Fetch();
-        std::string source = fields[0].Get<std::string>();
-        std::string data = fields[1].Get<std::string>();
-
-        std::vector<std::string_view> tokens = Acore::Tokenize(data, ' ', false);
-
-        PlayerSettingVector settings;
-        settings.reserve(tokens.size()); // reserve capacity but don't resize
-
-        for (auto const& token : tokens)
-        {
-            if (token.empty())
-                continue;
-
-            // Try to parse the value safely
-            if (auto parsed = Acore::StringTo<uint32>(token))
-                settings.emplace_back(*parsed);
-        }
-
-        m_charSettingsMap.emplace(std::move(source), std::move(settings));
-
-    } while (result->NextRow());
-}
-
-PlayerSetting Player::GetPlayerSetting(std::string const& source, uint8 index)
-{
-    auto it = m_charSettingsMap.find(source);
-    if (it == m_charSettingsMap.end() || static_cast<size_t>(index) >= it->second.size())
-    {
-        UpdatePlayerSetting(source, index, 0);
-        return m_charSettingsMap[source][index];
+        return;
     }
 
-    return it->second[index];
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+
+            std::string source = fields[0].Get<std::string>();
+            std::string data = fields[1].Get<std::string>();
+
+            std::vector<std::string_view> tokens = Acore::Tokenize(data, ' ', false);
+
+            PlayerSettingVector setting;
+            setting.resize(tokens.size());
+
+            uint32 count = 0;
+
+            for (auto& token : tokens)
+            {
+                if (token.empty())
+                {
+                    continue;
+                }
+
+                PlayerSetting set;
+                set.value = Acore::StringTo<uint32>(token).value();
+                setting[count] = set;
+                ++count;
+            }
+
+            m_charSettingsMap[source] = setting;
+
+        } while (result->NextRow());
+    }
+}
+
+PlayerSetting Player::GetPlayerSetting(std::string source, uint8 index)
+{
+    auto itr = m_charSettingsMap.find(source);
+
+    if (itr == m_charSettingsMap.end())
+    {
+        // Settings not found, this will initialize a new entry.
+        UpdatePlayerSetting(source, index, 0);
+        return GetPlayerSetting(source, index);
+    }
+
+    PlayerSettingVector settingVector = itr->second;
+    if (settingVector.size() < (uint8)(index + 1))
+    {
+        UpdatePlayerSetting(source, index, 0);
+        return GetPlayerSetting(source, index);
+    }
+
+    return itr->second[index];
 }
 
 void Player::_SavePlayerSettings(CharacterDatabaseTransaction trans)
 {
     if (!sWorld->getBoolConfig(CONFIG_PLAYER_SETTINGS_ENABLED))
-        return;
-
-    for (auto const& [source, settings] : m_charSettingsMap)
     {
-        if (settings.empty())
-            continue;
+        return;
+    }
 
+    for (auto& itr : m_charSettingsMap)
+    {
         std::ostringstream data;
-        data << settings[0].value;
 
-        for (size_t i = 1; i < settings.size(); ++i)
-            data << ' ' << settings[i].value;
+        for (auto& setting : itr.second)
+        {
+            data << setting.value << ' ';
+        }
 
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_REP_CHAR_SETTINGS);
         stmt->SetData(0, GetGUID().GetCounter());
-        stmt->SetData(1, source);
+        stmt->SetData(1, itr.first);
         stmt->SetData(2, data.str());
         trans->Append(stmt);
     }
 }
 
-void Player::UpdatePlayerSetting(std::string const& source, uint8 index, uint32 value)
+void Player::UpdatePlayerSetting(std::string source, uint8 index, uint32 value)
 {
-    auto it = m_charSettingsMap.find(source);
-    size_t const requiredSize = static_cast<size_t>(index) + 1;
+    auto itr = m_charSettingsMap.find(source);
+    uint8 size = index + 1;
 
-    if (it == m_charSettingsMap.end())
+    if (itr == m_charSettingsMap.end())
     {
-        // Settings not found, create new vector of appropriate size
-        PlayerSettingVector settings(requiredSize); // default-initialized PlayerSetting
-        settings[index].value = value;
+        // Settings not found, initialize a new entry.
+        PlayerSettingVector setting;
+        setting.resize(size);
 
-        m_charSettingsMap.emplace(source, std::move(settings));
+        for (uint32 itr = 0; itr <= index; ++itr)
+        {
+            PlayerSetting set;
+            set.value = itr == index ? value : 0;
+
+            setting[itr] = set;
+        }
+
+        m_charSettingsMap[source] = setting;
     }
     else
     {
-        PlayerSettingVector& settings = it->second;
-        if (settings.size() < requiredSize)
-            settings.resize(requiredSize); // new elements default to zero
-
-        settings[index].value = value;
+        if (size > itr->second.size())
+        {
+            itr->second.resize(size);
+        }
+        itr->second[index].value = value;
     }
 }
