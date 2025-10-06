@@ -18,6 +18,7 @@
 #include "InstanceMapScript.h"
 #include "ScriptedCreature.h"
 #include "gundrak.h"
+#include "GameObjectAI.h"
 
 DoorData const doorData[] =
 {
@@ -104,6 +105,9 @@ public:
                     break;
                 case GO_ECK_DOORS:
                 case GO_ECK_UNDERWATER_GATE:
+                    if (instance->IsHeroic())
+                        AddDoor(gameobject);
+                    break;
                 case GO_GAL_DARAH_DOORS0:
                 case GO_GAL_DARAH_DOORS1:
                 case GO_GAL_DARAH_DOORS2:
@@ -118,6 +122,9 @@ public:
             {
                 case GO_ECK_DOORS:
                 case GO_ECK_UNDERWATER_GATE:
+                    if (instance->IsHeroic())
+                        RemoveDoor(gameobject);
+                    break;
                 case GO_GAL_DARAH_DOORS0:
                 case GO_GAL_DARAH_DOORS1:
                 case GO_GAL_DARAH_DOORS2:
@@ -211,6 +218,9 @@ public:
                     if (GameObject* go = instance->GetGameObject(_bridgeGUIDs[i]))
                         go->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
             }
+            if (GameObject* collision = instance->GetGameObject(_bridgeGUIDs[4]))
+                if (collision->AI())
+                    collision->AI()->SetData(0, 1);
         }
     };
 };
