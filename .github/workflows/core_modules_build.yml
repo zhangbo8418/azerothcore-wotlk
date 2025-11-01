@@ -19,12 +19,8 @@ on:
       - 'src/server/shared/**/*'
       - 'src/tools/**/*'
 
-permissions:
-  actions: write
-  contents: read
-
 concurrency:
-  group: ${{ github.head_ref }} || concat(${{ github.ref_name }}, ${{ github.workflow }})
+  group: ${{ github.head_ref }} || concat(${{ github.ref }}, ${{ github.workflow }})
   cancel-in-progress: true
 
 jobs:
