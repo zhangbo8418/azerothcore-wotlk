@@ -417,8 +417,6 @@ Player::Player(WorldSession* session): Unit(), m_mover(this)
     GetObjectVisibilityContainer().InitForPlayer();
 
     sScriptMgr->OnConstructPlayer(this);
-
-    m_expectingChangeTransport = false;
 }
 
 Player::~Player()
@@ -1532,6 +1530,17 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             SetSelection(ObjectGuid::Empty);
 
             CombatStop();
+
+            // remove arena spell coldowns/buffs now to also remove pet's cooldowns before it's temporarily unsummoned
+            if (mEntry->IsBattleArena() && (HasPendingSpectatorForBG(0) || !HasPendingSpectatorForBG(GetBattlegroundId())))
+            {
+                // KEEP THIS ORDER!
+                RemoveArenaAuras();
+                if (pet)
+                    pet->RemoveArenaAuras();
+
+                RemoveArenaSpellCooldowns(true);
+            }
 
             // remove pet on map change
             if (pet)
