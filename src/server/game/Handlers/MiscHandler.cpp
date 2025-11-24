@@ -656,8 +656,7 @@ void WorldSession::HandleReclaimCorpseOpcode(WorldPacket& recv_data)
     if (time_t(corpse->GetGhostTime() + _player->GetCorpseReclaimDelay(corpse->GetType() == CORPSE_RESURRECTABLE_PVP)) > time_t(GameTime::GetGameTime().count()))
         return;
 
-    // skip phase check
-    if (!corpse->IsInMap(_player) || !corpse->IsWithinDist(_player, CORPSE_RECLAIM_RADIUS, true))
+    if (!corpse->IsWithinDistInMap(_player, CORPSE_RECLAIM_RADIUS, true))
         return;
 
     // resurrect
