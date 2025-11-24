@@ -152,7 +152,7 @@ class spell_dk_raise_ally : public SpellScript
 
     SpellCastResult CheckCast()
     {
-        Unit* unitTarget = GetExplTargetUnit();
+        Player* unitTarget = GetHitPlayer();
         if (!unitTarget)
             return SPELL_FAILED_BAD_TARGETS;
 
