@@ -29,11 +29,7 @@ enum ANData
     DATA_KRIKTHIR                       = 0,
     DATA_HADRONOX                       = 1,
     DATA_ANUBARAK                       = 2,
-    MAX_ENCOUNTERS                      = 3,
-
-    DATA_GASHRA                         = 4,
-    DATA_NARJIL                         = 5,
-    DATA_SILTHIK                        = 6
+    MAX_ENCOUNTERS                      = 3
 };
 
 enum ANIds

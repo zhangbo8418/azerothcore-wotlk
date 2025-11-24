@@ -666,9 +666,6 @@ public:
     WorldLocation* destTarget;
     int32 damage;
     SpellEffectHandleMode effectHandleMode;
-    Unit* m_reflectionTarget;
-    ObjectGuid m_reflectionTargetGuid;
-    Position m_reflectionTargetPosition;
     // used in effects handlers
     Aura* m_spellAura;
 

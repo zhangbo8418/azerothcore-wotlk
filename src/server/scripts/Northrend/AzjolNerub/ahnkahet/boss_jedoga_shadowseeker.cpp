@@ -90,7 +90,6 @@ enum SummonGroups
 {
     SUMMON_GROUP_OOC                        = 0,
     SUMMON_GROUP_OOC_TRIGGERS               = 1,
-    SUMMON_GROUP_IC_WORSHIPPERS             = 2
 };
 
 enum Points
@@ -218,7 +217,7 @@ struct boss_jedoga_shadowseeker : public BossAI
 
     void JustSummoned(Creature* summon) override
     {
-        if (summon->EntryEquals(NPC_JEDOGA_CONTROLLER, NPC_TWILIGHT_WORSHIPPER))
+        if (summon->GetEntry() == NPC_JEDOGA_CONTROLLER)
         {
             summons.Summon(summon);
         }
@@ -327,17 +326,6 @@ struct boss_jedoga_shadowseeker : public BossAI
         _JustEngagedWith();
         Talk(SAY_AGGRO);
         ReschedulleCombatEvents();
-
-        std::list<TempSummon*> tempSummons;
-        me->SummonCreatureGroup(SUMMON_GROUP_IC_WORSHIPPERS, &tempSummons);
-        if (!tempSummons.empty())
-        {
-            for (TempSummon* summon : tempSummons)
-            {
-                if (summon)
-                    summon->SetStandState(UNIT_STAND_STATE_KNEEL);
-            }
-        }
     }
 
     void KilledUnit(Unit* who) override
