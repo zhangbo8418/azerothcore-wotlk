@@ -204,10 +204,10 @@ bool WaypointMovementGenerator<Creature>::StartMove(Creature* creature)
     switch (node.move_type)
     {
         case WAYPOINT_MOVE_TYPE_LAND:
-            init.SetAnimation(AnimTier::Ground);
+            init.SetAnimation(Movement::ToGround);
             break;
         case WAYPOINT_MOVE_TYPE_TAKEOFF:
-            init.SetAnimation(AnimTier::Hover);
+            init.SetAnimation(Movement::ToFly);
             break;
         case WAYPOINT_MOVE_TYPE_RUN:
             init.SetWalk(false);
