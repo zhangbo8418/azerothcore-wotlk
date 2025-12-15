@@ -4130,37 +4130,17 @@ void Player::UpdateSoulboundTradeItems()
     // also checks for garbage data
     for (ItemDurationList::iterator itr = m_itemSoulboundTradeable.begin(); itr != m_itemSoulboundTradeable.end();)
     {
-        Item* item = *itr;
-
-        // 1) защита от nullptr – в релизе ASSERT не спасёт
-        if (!item)
+        ASSERT(*itr);
+        if ((*itr)->GetOwnerGUID() != GetGUID())
         {
-            itr = m_itemSoulboundTradeable.erase(itr);
+            m_itemSoulboundTradeable.erase(itr++);
             continue;
         }
-
-        // 2) GUID владельца в предмете не совпадает с этим Player – мусор, чистим
-        if (item->GetOwnerGUID() != GetGUID())
+        if ((*itr)->CheckSoulboundTradeExpire())
         {
-            itr = m_itemSoulboundTradeable.erase(itr);
+            m_itemSoulboundTradeable.erase(itr++);
             continue;
         }
-
-        // 3) ДОП. ЗАЩИТА: сам указатель на owner внутри Item битый или не наш
-        //    именно из-за этого у тебя и падало CheckSoulboundTradeExpire().
-        if (item->GetOwner() != this)
-        {
-            itr = m_itemSoulboundTradeable.erase(itr);
-            continue;
-        }
-
-        // 4) нормальный случай – проверяем истечение 2-часового трейда
-        if (item->CheckSoulboundTradeExpire())
-        {
-            itr = m_itemSoulboundTradeable.erase(itr);
-            continue;
-        }
-
         ++itr;
     }
 }
