@@ -2177,6 +2177,14 @@ uint8 Aura::GetProcEffectMask(AuraApplication* aurApp, ProcEventInfo& eventInfo,
             return 0;
     }
 
+    // Don't consume stealth charges from friendly spells
+    if (m_spellInfo->HasAura(SPELL_AURA_MOD_STEALTH))
+    {
+        if (SpellInfo const* spellInfo = eventInfo.GetSpellInfo())
+            if (spellInfo->IsPositive())
+                return 0;
+    }
+
     // check if we have charges to proc with
     if (IsUsingCharges() && !GetCharges())
         return 0;
@@ -2266,6 +2274,7 @@ uint8 Aura::GetProcEffectMask(AuraApplication* aurApp, ProcEventInfo& eventInfo,
     }
 
     float procChance = CalcProcChance(*procEntry, eventInfo);
+
     if (roll_chance_f(procChance))
         return procEffectMask;
 
@@ -2280,7 +2289,7 @@ float Aura::CalcProcChance(SpellProcEntry const& procEntry, ProcEventInfo& event
     if (Unit* caster = GetCaster())
     {
         // If PPM exists calculate chance from PPM
-        if (eventInfo.GetDamageInfo() && procEntry.ProcsPerMinute != 0)
+        if ((eventInfo.GetDamageInfo() || eventInfo.GetHealInfo()) && procEntry.ProcsPerMinute != 0)
         {
             SpellInfo const* procSpell = eventInfo.GetSpellInfo();
             uint32 attackSpeed = 0;

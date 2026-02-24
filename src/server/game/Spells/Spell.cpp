@@ -649,6 +649,7 @@ Spell::Spell(Unit* caster, SpellInfo const* info, TriggerCastFlags triggerFlags,
     m_diminishGroup = DIMINISHING_NONE;
     m_damage = 0;
     m_healing = 0;
+    m_damageBeforeTakenMods = 0;
     m_procAttacker = 0;
     m_procVictim = 0;
     m_procEx = 0;
@@ -718,6 +719,7 @@ Spell::~Spell()
 void Spell::InitExplicitTargets(SpellCastTargets const& targets)
 {
     m_targets = targets;
+    m_originalTargetGUID = targets.GetObjectTargetGUID();
     // this function tries to correct spell explicit targets for spell
     // client doesn't send explicit targets correctly sometimes - we need to fix such spells serverside
     // this also makes sure that we correctly send explicit targets to client (removes redundant data)
@@ -2242,9 +2244,13 @@ void Spell::prepareDataForTriggerSystem(AuraEffect const* /*triggeredByAura*/)
     if (m_spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER &&
             (m_spellInfo->SpellFamilyFlags[0] & 0x18 ||              // Freezing and Frost Trap, Freezing Arrow
              m_spellInfo->Id == 57879 || m_spellInfo->Id == 45145 ||  // Snake Trap - done this way to avoid double proc
-             m_spellInfo->SpellFamilyFlags[2] & 0x00064000))          // Explosive and Immolation Trap
+             m_spellInfo->SpellFamilyFlags[2] & 0x00024000))          // Explosive and Immolation Trap
     {
         m_procAttacker |= PROC_FLAG_DONE_TRAP_ACTIVATION;
+
+        // also fill up other flags (TargetInfo::DoDamageAndTriggers only fills up flag if both are not set)
+        m_procAttacker |= PROC_FLAG_DONE_SPELL_MAGIC_DMG_CLASS_NEG;
+        m_procVictim |= PROC_FLAG_TAKEN_SPELL_MAGIC_DMG_CLASS_NEG;
     }
 
     /* Effects which are result of aura proc from triggered spell cannot proc
@@ -2333,6 +2339,7 @@ void Spell::AddUnitTarget(Unit* target, uint32 effectMask, bool checkIfValid /*=
     targetInfo.processed  = false;                              // Effects not apply on target
     targetInfo.alive      = target->IsAlive();
     targetInfo.damage     = 0;
+    targetInfo.damageBeforeTakenMods = 0;
     targetInfo.crit       = false;
     targetInfo.scaleAura  = false;
     if (m_auraScaleMask && targetInfo.effectMask == m_auraScaleMask && m_caster != target)
@@ -2707,6 +2714,17 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
             addhealth = Unit::SpellCriticalHealingBonus(caster, m_spellInfo, addhealth, nullptr);
 
         HealInfo healInfo(caster, unitTarget, addhealth, m_spellInfo, m_spellInfo->GetSchoolMask());
+
+        // Heal amount before SpellHealingBonusTaken, used by Beacon of Light
+        if (target->damageBeforeTakenMods != 0)
+        {
+            uint32 healBeforeTakenMods = uint32(-target->damageBeforeTakenMods);
+            if (crit)
+                healBeforeTakenMods = Unit::SpellCriticalHealingBonus(caster, m_spellInfo, healBeforeTakenMods, nullptr);
+            healInfo.SetHealBeforeTakenMods(healBeforeTakenMods);
+        }
+        else
+            healInfo.SetHealBeforeTakenMods(addhealth);
 
         // Set hitMask based on crit
         if (crit)
@@ -3197,6 +3215,10 @@ void Spell::DoTriggersOnSpellHit(Unit* unit, uint8 effMask)
     /// @todo: move this code to scripts
     if (m_preCastSpell)
     {
+        // Avenging Wrath - also apply Immune Shield Marker
+        if (m_preCastSpell == 61987)
+            m_caster->CastSpell(unit, 61988, true);
+
         // Fearie Fire (Feral) - damage
         if (m_preCastSpell == 60089)
             m_caster->CastSpell(unit, m_preCastSpell, true);
@@ -4269,7 +4291,7 @@ void Spell::_handle_finish_phase()
             break;
         }
 
-        Unit::ProcSkillsAndAuras(m_originalCaster, m_originalCaster, procAttacker, PROC_FLAG_NONE, hitMask, 1, BASE_ATTACK, m_spellInfo, m_triggeredByAuraSpell.spellInfo,
+        Unit::ProcSkillsAndAuras(m_originalCaster, nullptr, procAttacker, PROC_FLAG_NONE, hitMask, 1, BASE_ATTACK, m_spellInfo, m_triggeredByAuraSpell.spellInfo,
             m_triggeredByAuraSpell.effectIndex, this, nullptr, nullptr, PROC_SPELL_PHASE_FINISH);
     }
 }
@@ -7834,6 +7856,11 @@ void Spell::DelayedChannel()
     SendChannelUpdate(m_timer);
 }
 
+Unit* Spell::GetOriginalTarget() const
+{
+    return ObjectAccessor::GetUnit(*m_caster, m_originalTargetGUID);
+}
+
 bool Spell::UpdatePointers()
 {
     if (m_originalCasterGUID == m_caster->GetGUID())
@@ -8289,6 +8316,7 @@ void Spell::DoAllEffectOnLaunchTarget(TargetInfo& targetInfo, float* multiplier)
         {
             m_damage = 0;
             m_healing = 0;
+            m_damageBeforeTakenMods = 0;
 
             HandleEffects(unit, nullptr, nullptr, i, SPELL_EFFECT_HANDLE_LAUNCH_TARGET);
 
@@ -8314,6 +8342,7 @@ void Spell::DoAllEffectOnLaunchTarget(TargetInfo& targetInfo, float* multiplier)
                 m_damageMultipliers[i] *= multiplier[i];
             }
             targetInfo.damage += m_damage;
+            targetInfo.damageBeforeTakenMods += m_damageBeforeTakenMods;
         }
     }
 
