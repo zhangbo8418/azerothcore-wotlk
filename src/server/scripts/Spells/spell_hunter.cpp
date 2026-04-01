@@ -52,6 +52,7 @@ enum HunterSpells
     SPELL_HUNTER_IMPROVED_MEND_PET                  = 24406,
     SPELL_HUNTER_INVIGORATION_TRIGGERED             = 53398,
     SPELL_HUNTER_MASTERS_CALL_TRIGGERED             = 62305,
+    SPELL_HUNTER_MISDIRECTION                       = 34477,
     SPELL_HUNTER_MISDIRECTION_PROC                  = 35079,
     SPELL_HUNTER_PET_LAST_STAND_TRIGGERED           = 53479,
     SPELL_HUNTER_PET_HEART_OF_THE_PHOENIX           = 55709,
@@ -492,7 +493,7 @@ class spell_hun_chimera_shot : public SpellScript
 
                         // Amount of one aura tick
                         basePoint = int32(CalculatePct(unitTarget->GetMaxPower(POWER_MANA), aurEff->GetAmount()));
-                        int32 casterBasePoint = aurEff->GetAmount() * unitTarget->GetMaxPower(POWER_MANA) / 50; /// @todo: Caster uses unitTarget?
+                        int32 casterBasePoint = aurEff->GetAmount() * caster->GetMaxPower(POWER_MANA) / 50;
                         if (basePoint > casterBasePoint)
                             basePoint = casterBasePoint;
                         ApplyPct(basePoint, TickCount * 60);
@@ -893,7 +894,7 @@ class spell_hun_misdirection : public AuraScript
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
         if (GetTargetApplication()->GetRemoveMode() != AURA_REMOVE_BY_DEFAULT || !GetTarget()->HasAura(SPELL_HUNTER_MISDIRECTION_PROC))
-            GetTarget()->ResetRedirectThreat();
+            GetTarget()->GetThreatMgr().UnregisterRedirectThreat(SPELL_HUNTER_MISDIRECTION);
     }
 
     bool CheckProc(ProcEventInfo& eventInfo)
@@ -902,7 +903,7 @@ class spell_hun_misdirection : public AuraScript
         if ((eventInfo.GetProcSpell() && (eventInfo.GetProcSpell()->GetSpellInfo()->SpellFamilyFlags[0] & 0x800000)) || (eventInfo.GetHealInfo() && (eventInfo.GetHealInfo()->GetSpellInfo()->SpellFamilyFlags[0] & 0x800000)))
             return false;
 
-        return GetTarget()->GetRedirectThreatTarget();
+        return GetTarget()->GetThreatMgr().HasRedirects();
     }
 
     void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
@@ -926,7 +927,7 @@ class spell_hun_misdirection_proc : public AuraScript
 
     void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        GetTarget()->ResetRedirectThreat();
+        GetTarget()->GetThreatMgr().UnregisterRedirectThreat(SPELL_HUNTER_MISDIRECTION);
     }
 
     void Register() override
@@ -1518,6 +1519,30 @@ class spell_hun_explosive_shot : public SpellScript
     }
 };
 
+// 34026 - Kill Command
+class spell_hun_kill_command : public SpellScript
+{
+    PrepareSpellScript(spell_hun_kill_command);
+
+    SpellCastResult CheckCast()
+    {
+        Unit* caster = GetCaster();
+        if (!caster || !caster->IsPlayer())
+            return SPELL_FAILED_NO_VALID_TARGETS;
+
+        Pet* pet = caster->ToPlayer()->GetPet();
+        if (!pet)
+            return SPELL_FAILED_NO_PET;
+
+        return SPELL_CAST_OK;
+    }
+
+    void Register() override
+    {
+        OnCheckCast += SpellCheckCastFn(spell_hun_kill_command::CheckCast);
+    }
+};
+
 // 58914 - Kill Command (Pet Aura)
 class spell_hun_kill_command_pet : public AuraScript
 {
@@ -1704,6 +1729,7 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_glyph_of_mend_pet);
     // Proc system scripts
     RegisterSpellScript(spell_hun_rapid_recuperation);
+    RegisterSpellScript(spell_hun_kill_command);
     RegisterSpellScript(spell_hun_kill_command_pet);
     RegisterSpellScript(spell_hun_piercing_shots);
     RegisterSpellScript(spell_hun_rapid_recuperation_trigger);

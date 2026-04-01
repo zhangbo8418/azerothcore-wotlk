@@ -2161,7 +2161,7 @@ void Player::SetInWater(bool apply)
     // remove auras that need water/land
     RemoveAurasWithInterruptFlags(apply ? AURA_INTERRUPT_FLAG_NOT_ABOVEWATER : AURA_INTERRUPT_FLAG_NOT_UNDERWATER);
 
-    getHostileRefMgr().updateThreatTables();
+    GetThreatMgr().EvaluateSuppressed();
 
     if (InstanceScript* instance = GetInstanceScript())
         instance->OnPlayerInWaterStateUpdate(this, apply);
@@ -2203,7 +2203,6 @@ void Player::SetGameMaster(bool on)
         {
             if (GetSession()->IsGMAccount())
                 pet->SetFaction(FACTION_FRIENDLY);
-            pet->getHostileRefMgr().setOnlineOfflineState(false);
         }
         if (HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
         {
@@ -2212,7 +2211,6 @@ void Player::SetGameMaster(bool on)
         }
         ResetContestedPvP();
 
-        getHostileRefMgr().setOnlineOfflineState(false);
         CombatStopWithPets();
 
         SetPhaseMask(uint32(PHASEMASK_ANYWHERE), false);    // see and visible in all phases
@@ -2234,10 +2232,7 @@ void Player::SetGameMaster(bool on)
         RemoveUnitFlag2(UNIT_FLAG2_ALLOW_CHEAT_SPELLS);
 
         if (Pet* pet = GetPet())
-        {
             pet->SetFaction(GetFaction());
-            pet->getHostileRefMgr().setOnlineOfflineState(true);
-        }
 
         // restore FFA PvP Server state
         if (sWorld->IsFFAPvPRealm())
@@ -2251,7 +2246,6 @@ void Player::SetGameMaster(bool on)
         // restore FFA PvP area state, remove not allowed for GM mounts
         UpdateArea(m_areaUpdateId);
 
-        getHostileRefMgr().setOnlineOfflineState(true);
         SetServerSideVisibilityDetect(SERVERSIDE_VISIBILITY_GM, SEC_PLAYER);
     }
 
@@ -2268,7 +2262,6 @@ void Player::SetGMVisible(bool on)
         m_ExtraFlags &= ~PLAYER_EXTRA_GM_INVISIBLE;
         SetServerSideVisibility(SERVERSIDE_VISIBILITY_GM, SEC_PLAYER);
 
-        getHostileRefMgr().setOnlineOfflineState(false);
         CombatStopWithPets();
     }
     else
@@ -5375,7 +5368,10 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
 
             // remove all spells that related to this skill
             for (SkillLineAbilityEntry const* pAbility : GetSkillLineAbilitiesBySkillLine(id))
+            {
                 removeSpell(sSpellMgr->GetFirstSpellInChain(pAbility->Spell), SPEC_MASK_ALL, false);
+                RemoveAurasDueToSpell(pAbility->Spell);
+            }
         }
     }
     else if (newVal)                                        //add
@@ -7468,6 +7464,10 @@ void Player::CastItemUseSpell(Item* item, SpellCastTargets const& targets, uint8
 
         if (HasSpellCooldown(spellInfo->Id))
         {
+            // Notify client so it can clean up the pending spell cast.
+            // Without this the client orphans the cast and blocks auto-attack.
+            Spell::SendCastResult(ToPlayer(), spellInfo, cast_count,
+                SPELL_FAILED_NOT_READY);
             continue;
         }
 
@@ -7514,7 +7514,11 @@ void Player::CastItemUseSpell(Item* item, SpellCastTargets const& targets, uint8
             }
 
             if (HasSpellCooldown(spellInfo->Id))
+            {
+                Spell::SendCastResult(ToPlayer(), spellInfo, cast_count,
+                    SPELL_FAILED_NOT_READY);
                 continue;
+            }
 
             Spell* spell = new Spell(this, spellInfo, (count > 0) ? TRIGGERED_FULL_MASK : TRIGGERED_NONE);
             spell->m_CastItem = item;
@@ -9999,14 +10003,6 @@ void Player::RemoveSpellMods(Spell* spell)
                         if (roll_chance_i(aurEff->GetAmount()))
                             continue; // don't consume charge
             }
-            // ROGUE MUTILATE WITH COLD BLOOD
-            if (spellInfo->Id == 5374)
-            {
-                SpellInfo const* sp = mod->ownerAura->GetSpellInfo();
-                if (sp->Id == 14177) // Cold Blood
-                    continue; // don't consume charge
-            }
-
             if (mod->ownerAura->DropCharge(AURA_REMOVE_BY_EXPIRE))
                 itr = m_spellMods[i].begin();
         }
@@ -10036,9 +10032,10 @@ bool Player::HasSpellModApplied(SpellModifier* mod, Spell* spell)
 
 void Player::SetSpellModTakingSpell(Spell* spell, bool apply)
 {
-    if (apply && m_spellModTakingSpell && m_spellModTakingSpell != spell)
+    if (apply && m_spellModTakingSpell != nullptr)
         return;
-    else if (!apply && m_spellModTakingSpell != spell)
+
+    if (!apply && (!m_spellModTakingSpell || m_spellModTakingSpell != spell))
         return;
 
     m_spellModTakingSpell = apply ? spell : nullptr;
@@ -10385,7 +10382,6 @@ void Player::CleanupAfterTaxiFlight()
     m_taxi.ClearTaxiDestinations();        // not destinations, clear source node
     Dismount();
     RemoveUnitFlag(UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
-    getHostileRefMgr().setOnlineOfflineState(true);
 }
 
 void Player::ContinueTaxiFlight()
@@ -11759,7 +11755,7 @@ void Player::ApplyEquipCooldown(Item* pItem)
                 continue;
 
             if (Aura* itemAura = GetAura(spellData.SpellId, GetGUID(), pItem->GetGUID()))
-                itemAura->AddProcCooldown(std::chrono::steady_clock::now() + std::chrono::seconds(30));
+                itemAura->AddProcCooldown(std::chrono::steady_clock::now() + procEntry->Cooldown);
             continue;
         }
 
@@ -13961,6 +13957,9 @@ void Player::LearnTalent(uint32 talentId, uint32 talentRank, bool command /*= fa
 
     TalentEntry const* talentInfo = sTalentStore.LookupEntry(talentId);
     if (!talentInfo)
+        return;
+
+    if (!sScriptMgr->OnPlayerCanLearnTalent(this, talentInfo, talentRank))
         return;
 
     TalentTabEntry const* talentTabInfo = sTalentTabStore.LookupEntry(talentInfo->TalentTab);
