@@ -340,7 +340,7 @@ public:
 
             uint32 a2, a3, a4, a5, a6;
             float a8, a9, a10, a11;
-            char const* a7;
+            std::string a7;
 
             WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_WAYPOINT_SCRIPT_BY_ID);
             stmt->SetData(0, id);
